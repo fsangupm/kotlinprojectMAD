@@ -4,7 +4,6 @@ package com.example.helloworld
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,9 +35,9 @@ import androidx.compose.runtime.getValue // ^^
 import androidx.compose.runtime.setValue // ^^
 import android.provider.Settings
 import android.net.Uri
-import android.widget.Button
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat.startActivity
+import android.widget.Toast
 
 class MainActivity : AppCompatActivity(), LocationListener {
     private val TAG = "btaMainActivity"
@@ -47,14 +46,17 @@ class MainActivity : AppCompatActivity(), LocationListener {
     // state variables to hold the latitude and longitude
     private var latitude by mutableStateOf("0.0")
     private var longitude by mutableStateOf("0.0")
+    private var latestLocation by mutableStateOf<Location?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         Log.d(TAG, "onCreate: The activity is being created.")
         enableEdgeToEdge()
         setContent {
             HelloWorldTheme {
-                OpenSettingsButton() // for demonstration purposes (can revoke location permissions)
+                AppSettingsButton() // for demonstration purposes (can revoke location permissions)
+                SettingsButton()
                 Column( // center the button
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.Center,
@@ -75,10 +77,13 @@ class MainActivity : AppCompatActivity(), LocationListener {
                     ) {
                         Text("Go to Second Activity")
                     }
+
+                    OpenStreetMapsButton(latestLocation = latestLocation) // composable button function for navigating to openstreetmapsactivity
                 } // Column
             } // HelloWorldTheme
         }
 
+        // v3
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         // Check for location permissions
         if (ActivityCompat.checkSelfPermission(
@@ -117,7 +122,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
         // update latitude and longitude state values
         latitude = location.latitude.toString()
         longitude = location.longitude.toString()
-
+        latestLocation = location
         // log new location
         Log.v(TAG, "Location changed: Latitude: $latitude, Longitude: $longitude")
     }
@@ -144,7 +149,7 @@ fun GreetingPreview() {
 }
 
 @Composable
-fun OpenSettingsButton() { // for demonstration purposes (can revoke location permissions)
+fun AppSettingsButton() { // for demonstration purposes (can revoke location permissions)
     val context = LocalContext.current // Get the context
     // Button to open App Info settings page
     Button(onClick = {
@@ -154,5 +159,43 @@ fun OpenSettingsButton() { // for demonstration purposes (can revoke location pe
         context.startActivity(intent) // Use context to start the activity
     }) {
         Text("Go to App Settings")
+    }
+}
+
+@Composable
+fun OpenStreetMapsButton(latestLocation: Location?) {
+    val context = LocalContext.current // Get the context here
+    // button for main -> openstreetmaps: Intent and location as parameter
+    Button(onClick = {
+        if (latestLocation != null) {
+            val intent = Intent(context, OpenStreetMapsActivity::class.java)
+            val bundle = Bundle()
+            bundle.putParcelable("location", latestLocation)
+            intent.putExtra("locationBundle", bundle)
+            context.startActivity(intent)
+        } else {
+            Log.e("MainActivity", "Location not set yet.")
+            Toast.makeText(context, "Location not available.", Toast.LENGTH_SHORT).show() // Show toast if location is null
+        }
+    }) {
+        Text(text = "Open OpenStreetMap")
+    }
+}
+
+@Composable
+fun SettingsButton() {
+    val context = LocalContext.current // Get the current context
+
+    Button(onClick = {
+        try {
+            // Open the Settings screen using an Intent
+            val intent = Intent(Settings.ACTION_SETTINGS)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            // Show a Toast message if opening Settings fails
+            Toast.makeText(context, "Failed to open settings", Toast.LENGTH_SHORT).show()
+        }
+    }) {
+        Text(text = "Open Settings")
     }
 }
