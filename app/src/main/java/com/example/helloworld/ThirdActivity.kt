@@ -41,7 +41,9 @@ class ThirdActivity : AppCompatActivity() {
         setContent {
             HelloWorldTheme {
                 Column( // set in the center of screen
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(WindowInsets.systemBars.asPaddingValues()), // Add padding for system bars
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -49,6 +51,7 @@ class ThirdActivity : AppCompatActivity() {
                     Button(onClick = {
                         val intent = Intent(this@ThirdActivity, SecondActivity::class.java)
                         startActivity(intent)
+                        finish()
                     }) {
                         Text("Go to Second Activity")
                     }

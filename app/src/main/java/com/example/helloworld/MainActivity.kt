@@ -38,6 +38,19 @@ import android.net.Uri
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat.startActivity
 import android.widget.Toast
+import android.widget.EditText
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.remember
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Switch
+import androidx.compose.runtime.MutableState
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import java.io.File
 
 class MainActivity : AppCompatActivity(), LocationListener {
     private val TAG = "btaMainActivity"
@@ -47,6 +60,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
     private var latitude by mutableStateOf("0.0")
     private var longitude by mutableStateOf("0.0")
     private var latestLocation by mutableStateOf<Location?>(null)
+    private var isLocationEnabled by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,31 +69,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
         enableEdgeToEdge()
         setContent {
             HelloWorldTheme {
-                AppSettingsButton() // for demonstration purposes (can revoke location permissions)
-                SettingsButton()
-                Column( // center the button
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(text = "Hello World!")
-
-                    // button to second activity
-                    Button(
-                        onClick = {
-                            val intent = Intent(this@MainActivity, SecondActivity::class.java)
-                            startActivity(intent)
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF003eff), // background blue color
-                            contentColor = Color.White // text color
-                        )
-                    ) {
-                        Text("Go to Second Activity")
-                    }
-
-                    OpenStreetMapsButton(latestLocation = latestLocation) // composable button function for navigating to openstreetmapsactivity
-                } // Column
+                MainScreen()
             } // HelloWorldTheme
         }
 
@@ -107,6 +97,81 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
     }
 
+    @Composable
+    fun MainScreen() {
+        val context = LocalContext.current
+        val userIdentifier = getUserIdentifier(context)
+        var showDialog by remember { mutableStateOf(false) }
+
+        AppSettingsButton() // for demonstration purposes (can revoke location permissions)
+        SettingsButton()
+
+        Column( // center the button
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(WindowInsets.systemBars.asPaddingValues()), // Add padding for system bars
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "Hello World!")
+
+            // button to second activity
+            Button(
+                onClick = {
+                    val intent = Intent(this@MainActivity, SecondActivity::class.java)
+                    startActivity(intent)
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF003eff), // background blue color
+                    contentColor = Color.White // text color
+                )
+            ) {
+                Text("Go to Second Activity")
+            }
+
+            OpenStreetMapsButton(latestLocation = latestLocation) // composable button function for navigating to openstreetmapsactivity
+
+            Button(
+                onClick = {
+                    if (userIdentifier != null) { // if User ID is already saved
+                        Toast.makeText(context, "User ID: $userIdentifier", Toast.LENGTH_LONG).show()
+                    }
+                    showDialog = true
+                }
+            ) {
+                Text("Enter User ID")
+            }
+
+            // v4 Location Switch
+            LocationSwitch(
+                isChecked = isLocationEnabled,
+                onCheckedChange = { isChecked ->
+                    isLocationEnabled = isChecked
+                    if (isChecked) {
+                        startLocationUpdates()
+                    } else {
+                        stopLocationUpdates()
+                    }
+                }
+            )
+
+            // Show the dialog if the user identifier is not saved
+            if (userIdentifier == null) {
+                showDialog = true
+            }
+            if (showDialog) {
+                ShowUserIDDialogue(
+                    onDismiss = { showDialog = false },
+                    onSave = { newUserIdentifier ->
+                        saveUserIdentifier(newUserIdentifier)
+                        Toast.makeText(context, "User ID saved: $newUserIdentifier", Toast.LENGTH_LONG).show()
+                        showDialog = false // Close the dialog after saving
+                    }
+                )
+            }
+        } // Column
+    } // MainScreen
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == locationPermissionCode) {
@@ -124,12 +189,95 @@ class MainActivity : AppCompatActivity(), LocationListener {
         longitude = location.longitude.toString()
         latestLocation = location
         // log new location
-        Log.v(TAG, "Location changed: Latitude: $latitude, Longitude: $longitude")
+        // Log.v(TAG, "Location changed: Latitude: $latitude, Longitude: $longitude")
+        // show toast with new location
+        val toastText = "New location: ${location.latitude}, ${location.longitude}"
+        Toast.makeText(this, toastText, Toast.LENGTH_SHORT).show()
+        saveCoordinatesToFile(location.latitude, location.longitude)
     }
 
     override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
     override fun onProviderEnabled(provider: String) {}
     override fun onProviderDisabled(provider: String) {}
+
+    // v4 persistence
+    private fun saveUserIdentifier(userIdentifier: String) {
+        val sharedPreferences = this.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        sharedPreferences.edit().apply {
+            putString("userIdentifier", userIdentifier)
+            apply()
+        }
+    }
+    private fun getUserIdentifier(context: Context): String? {
+        val sharedPreferences = this.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        return sharedPreferences.getString("userIdentifier", null)
+    }
+
+    private fun startLocationUpdates() {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+                locationPermissionCode
+            )
+        } else {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5f, this)
+        }
+    }
+    private fun stopLocationUpdates() {
+        locationManager.removeUpdates(this)
+    }
+
+    @Composable
+    fun ShowUserIDDialogue(onDismiss: () -> Unit, onSave: (String) -> Unit) {
+        var context = LocalContext.current
+        var userInput by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = { onDismiss() },
+            title = { Text("Enter User Identifier") },
+            text = {
+                TextField(
+                    value = userInput,
+                    onValueChange = { userInput = it },
+                    label = { Text("User Identifier") },
+                    modifier = Modifier.padding(16.dp)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (userInput.isNotBlank()) {
+                            onSave(userInput)
+                        } else {
+                            Toast.makeText(context, "User ID cannot be blank", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                Button(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    private fun saveCoordinatesToFile(latitude: Double, longitude: Double) {
+        val fileName = "gps_coordinates.csv"
+        val file = File(filesDir, fileName)
+        val timestamp = System.currentTimeMillis()
+        file.appendText("$timestamp;$latitude;$longitude\n")
+    }
 }
 
 @Composable
@@ -197,5 +345,26 @@ fun SettingsButton() {
         }
     }) {
         Text(text = "Open Settings")
+    }
+}
+
+@Composable
+fun LocationSwitch(
+    isChecked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically, // align text and switch vertically
+        modifier = Modifier.padding(8.dp)
+    ) {
+        Text(
+            text = if (isChecked) "Disable location" else "Enable location",
+            fontSize = 12.sp // smaller font
+        )
+        Switch(
+            checked = isChecked,
+            onCheckedChange = onCheckedChange,
+            modifier = Modifier.padding(start = 8.dp)
+        )
     }
 }

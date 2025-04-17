@@ -23,6 +23,9 @@ import android.util.Log
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import androidx.compose.runtime.mutableStateOf
+import java.io.IOException
+import androidx.compose.runtime.remember
 
 class SecondActivity : AppCompatActivity() {
     private val TAG = "btaSecondActivity"
@@ -30,6 +33,9 @@ class SecondActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate: The activity is being created.")
+
+        val fileContentsState = mutableStateOf("Loading...")
+        fileContentsState.value = readFileContents()
 
         enableEdgeToEdge()
         setContentView(R.layout.activity_second)
@@ -41,7 +47,9 @@ class SecondActivity : AppCompatActivity() {
         setContent {
             HelloWorldTheme {
                 Column( // center the buttons
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(WindowInsets.systemBars.asPaddingValues()), // Add padding for system bars
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -66,8 +74,29 @@ class SecondActivity : AppCompatActivity() {
                     }) {
                         Text("Go to Third Activity")
                     }
+
+                    // textview right below buttons
+                    Text(text = "GPS Coordinates File Contents:")
+                    Text(
+                        text = fileContentsState.value,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 } // Column
             } // HelloWorldTheme
+        }
+    }
+
+    private fun readFileContents(): String {
+        val fileName = "gps_coordinates.csv"
+        return try {
+            // Open the file from internal storage
+            openFileInput(fileName).bufferedReader().useLines { lines ->
+                lines.fold("") { some, text ->
+                    "$some\n$text"
+                }
+            }
+        } catch (e: IOException) {
+            "Error reading file: ${e.message}"
         }
     }
 }
