@@ -52,6 +52,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.io.File
 
+// v5 added imports
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.Box
+
+
 class MainActivity : AppCompatActivity(), LocationListener {
     private val TAG = "btaMainActivity"
     private lateinit var locationManager: LocationManager
@@ -74,7 +86,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
         }
 
         // v3
-        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
         // Check for location permissions
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -97,14 +109,45 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun MainScreen() {
         val context = LocalContext.current
         val userIdentifier = getUserIdentifier(context)
         var showDialog by remember { mutableStateOf(false) }
 
-        AppSettingsButton() // for demonstration purposes (can revoke location permissions)
-        SettingsButton()
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("My App") },
+                    actions = {
+                        IconButton(onClick = {
+                            val intent = Intent(context, SecondActivity::class.java)
+                            context.startActivity(intent)
+                        }) {
+                            Icon(Icons.Default.List, contentDescription = "Second Activity")
+                        }
+                        IconButton(onClick = {
+                            val intent = Intent(context, OpenStreetMapsActivity::class.java)
+                            context.startActivity(intent)
+                        }) {
+                            Icon(Icons.Default.Place, contentDescription = "Map")
+                        }
+                        IconButton(onClick = {
+                            val intent = Intent(context, SettingsActivity::class.java)
+                            context.startActivity(intent)
+                        }) {
+                            Icon(Icons.Default.Settings, contentDescription = "Settings")
+                        }
+                    }
+                )
+            }, // topBAr
+            content = { innerPadding ->
+                Box(modifier = Modifier.padding(innerPadding)) {
+                    // empty for now
+                }
+            }
+        )
 
         Column( // center the button
             modifier = Modifier
@@ -115,7 +158,8 @@ class MainActivity : AppCompatActivity(), LocationListener {
         ) {
             Text(text = "Hello World!")
 
-            // button to second activity
+            // commented out buttons
+            /*
             Button(
                 onClick = {
                     val intent = Intent(this@MainActivity, SecondActivity::class.java)
@@ -130,8 +174,9 @@ class MainActivity : AppCompatActivity(), LocationListener {
             }
 
             OpenStreetMapsButton(latestLocation = latestLocation) // composable button function for navigating to openstreetmapsactivity
+            */
 
-            Button(
+            Button( // User ID button
                 onClick = {
                     if (userIdentifier != null) { // if User ID is already saved
                         Toast.makeText(context, "User ID: $userIdentifier", Toast.LENGTH_LONG).show()
@@ -142,8 +187,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
                 Text("Enter User ID")
             }
 
-            // v4 Location Switch
-            LocationSwitch(
+            LocationSwitch( // Location Switch
                 isChecked = isLocationEnabled,
                 onCheckedChange = { isChecked ->
                     isLocationEnabled = isChecked
@@ -202,14 +246,14 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
     // v4 persistence
     private fun saveUserIdentifier(userIdentifier: String) {
-        val sharedPreferences = this.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        val sharedPreferences = this.getSharedPreferences("AppPreferences", MODE_PRIVATE)
         sharedPreferences.edit().apply {
             putString("userIdentifier", userIdentifier)
             apply()
         }
     }
     private fun getUserIdentifier(context: Context): String? {
-        val sharedPreferences = this.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        val sharedPreferences = this.getSharedPreferences("AppPreferences", MODE_PRIVATE)
         return sharedPreferences.getString("userIdentifier", null)
     }
 
@@ -293,20 +337,6 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 fun GreetingPreview() {
     HelloWorldTheme {
         Greeting("World")
-    }
-}
-
-@Composable
-fun AppSettingsButton() { // for demonstration purposes (can revoke location permissions)
-    val context = LocalContext.current // Get the context
-    // Button to open App Info settings page
-    Button(onClick = {
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-        val uri = Uri.fromParts("package", context.packageName, null) // Get the package name from context
-        intent.data = uri
-        context.startActivity(intent) // Use context to start the activity
-    }) {
-        Text("Go to App Settings")
     }
 }
 
