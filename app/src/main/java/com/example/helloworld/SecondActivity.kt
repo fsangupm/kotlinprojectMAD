@@ -36,6 +36,19 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.clickable
 
+//v6
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import androidx.compose.runtime.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.example.helloworld.room.AppDatabase
+import com.example.helloworld.room.CoordinatesEntity
+
 class SecondActivity : AppCompatActivity() {
     private val TAG = "btaSecondActivity"
 
@@ -43,8 +56,9 @@ class SecondActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate: The activity is being created.")
 
-        val fileContentsState = mutableStateOf("Loading...")
-        fileContentsState.value = readFileContents()
+        // dont need anymore
+//        val fileContentsState = mutableStateOf("Loading...")
+//        fileContentsState.value = readFileContents()
 
         enableEdgeToEdge()
         setContentView(R.layout.activity_second)
@@ -55,17 +69,30 @@ class SecondActivity : AppCompatActivity() {
         }
         setContent {
             HelloWorldTheme {
-                val fileContents = fileContentsState.value
-                val rows = fileContents.trim().lines().mapNotNull { line ->
-                    val parts = line.split(";")
-                    if (parts.size >= 3) {
-                        val timestamp = parts[0].toLongOrNull()
-                        val lat = parts[1].toDoubleOrNull()
-                        val lon = parts[2].toDoubleOrNull()
-                        if (timestamp != null && lat != null && lon != null) {
-                            Triple(timestamp, lat, lon)
-                        } else null
-                    } else null
+                // dont need anymore
+//                val fileContents = fileContentsState.value
+//                val rows = fileContents.trim().lines().mapNotNull { ... }
+                val db = AppDatabase.getDatabase(this)
+                val coordinatesList = remember { mutableStateOf(listOf<CoordinatesEntity>()) }
+
+                // Refreshes room information everytime the activity is resumed
+                // To be able to go back and forth from third to second activity
+                val lifecycleOwner = LocalLifecycleOwner.current
+                DisposableEffect(lifecycleOwner) {
+                    val observer = LifecycleEventObserver { _, event ->
+                        if (event == Lifecycle.Event.ON_RESUME) {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                val updatedData = db.coordinatesDao().getAll()
+                                withContext(Dispatchers.Main) {
+                                    coordinatesList.value = updatedData
+                                }
+                            }
+                        }
+                    }
+                    lifecycleOwner.lifecycle.addObserver(observer)
+                    onDispose {
+                        lifecycleOwner.lifecycle.removeObserver(observer)
+                    }
                 }
 
                 Column(
@@ -80,39 +107,45 @@ class SecondActivity : AppCompatActivity() {
 
                     LazyColumn {
                         item {
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
                                 Text("Date/Time", Modifier.weight(1f), fontSize = 14.sp)
                                 Text("Latitude", Modifier.weight(1f), fontSize = 14.sp)
                                 Text("Longitude", Modifier.weight(1f), fontSize = 14.sp)
                             }
                         }
 
-                        items(rows) { row ->
-                            val (timestamp, lat, lon) = row
+                        items(coordinatesList.value) { coord ->
                             val formattedTime = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-                                .format(java.util.Date(timestamp))
+                                .format(java.util.Date(coord.timestamp))
 
                             Row(
                                 Modifier
                                     .fillMaxWidth()
                                     .clickable {
                                         val intent = Intent(this@SecondActivity, ThirdActivity::class.java).apply {
-                                            putExtra("Latitude", lat.toString())
-                                            putExtra("Longitude", lon.toString())
+                                            putExtra("Latitude", coord.latitude.toString())
+                                            putExtra("Longitude", coord.longitude.toString())
+                                            putExtra("Timestamp", coord.timestamp.toString())
                                         }
                                         startActivity(intent)
-                                        finish()
+                                        // finish() // Commented out after adding coordinate edit screen
                                     }
                                     .padding(vertical = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(formattedTime, Modifier.weight(1f), fontSize = 12.sp)
-                                Text(String.format("%.6f", lat), Modifier.weight(1f), fontSize = 12.sp)
-                                Text(String.format("%.6f", lon), Modifier.weight(1f), fontSize = 12.sp)
+                                Text(String.format("%.6f", coord.latitude), Modifier.weight(1f), fontSize = 12.sp)
+                                Text(String.format("%.6f", coord.longitude), Modifier.weight(1f), fontSize = 12.sp)
                             }
-                        } // item
-                    } // LazyColumn
-                } // column
+                        }
+                    }
+                }
+                // end of edits
             } // HelloWorldTheme
         } // setContent
     } //

@@ -63,6 +63,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.Box
 
+//v6
+import com.example.helloworld.room.AppDatabase
+import com.example.helloworld.room.CoordinatesEntity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), LocationListener {
     private val TAG = "btaMainActivity"
@@ -128,8 +133,17 @@ class MainActivity : AppCompatActivity(), LocationListener {
                             Icon(Icons.Default.List, contentDescription = "Second Activity")
                         }
                         IconButton(onClick = {
-                            val intent = Intent(context, OpenStreetMapsActivity::class.java)
-                            context.startActivity(intent)
+                            if (latestLocation != null) {
+                                val intent = Intent(context, OpenStreetMapsActivity::class.java)
+                                val bundle = Bundle()
+                                bundle.putParcelable("location", latestLocation)
+                                intent.putExtra("locationBundle", bundle)
+                                Log.d("MainActivity", "Sending location: $latestLocation")
+                                context.startActivity(intent)
+                            } else {
+                                Toast.makeText(context, "Location not available", Toast.LENGTH_SHORT).show()
+                                Log.e("MainActivity", "Location was null")
+                            }
                         }) {
                             Icon(Icons.Default.Place, contentDescription = "Map")
                         }
@@ -221,7 +235,12 @@ class MainActivity : AppCompatActivity(), LocationListener {
         if (requestCode == locationPermissionCode) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5f, this)
+                    locationManager.requestLocationUpdates(
+                        LocationManager.GPS_PROVIDER,
+                        5000L,
+                        5f,
+                        this
+                    )
                 }
             }
         }
@@ -229,15 +248,25 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
     override fun onLocationChanged(location: Location) {
         // update latitude and longitude state values
+        latestLocation = location
         latitude = location.latitude.toString()
         longitude = location.longitude.toString()
-        latestLocation = location
         // log new location
         // Log.v(TAG, "Location changed: Latitude: $latitude, Longitude: $longitude")
         // show toast with new location
         val toastText = "New location: ${location.latitude}, ${location.longitude}"
         Toast.makeText(this, toastText, Toast.LENGTH_SHORT).show()
-        saveCoordinatesToFile(location.latitude, location.longitude)
+        // saveCoordinatesToFile(location.latitude, location.longitude)
+        val db = AppDatabase.getDatabase(this)
+        val entity = CoordinatesEntity(
+            timestamp = System.currentTimeMillis(),
+            latitude = location.latitude,
+            longitude = location.longitude
+        )
+
+        lifecycleScope.launch {
+            db.coordinatesDao().insert(entity)
+        }
     }
 
     override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}

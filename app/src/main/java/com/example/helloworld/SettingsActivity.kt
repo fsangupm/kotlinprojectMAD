@@ -44,6 +44,7 @@ class SettingsActivity : AppCompatActivity() {
             HelloWorldTheme {
                 val sharedPrefs = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
                 val userId = sharedPrefs.getString("userIdentifier", "No ID saved")
+                val apiKey = sharedPrefs.getString("API_KEY", "Not set")
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -64,6 +65,7 @@ class SettingsActivity : AppCompatActivity() {
                 ) {
                     val sharedPrefs = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
                     val userId = sharedPrefs.getString("userIdentifier", "No ID saved")
+                    val apiKey = sharedPrefs.getString("API_KEY", "Not set")
                     Text("User ID: $userId")
                     Spacer(modifier = Modifier.height(8.dp))
                     AppSettingsButton()
