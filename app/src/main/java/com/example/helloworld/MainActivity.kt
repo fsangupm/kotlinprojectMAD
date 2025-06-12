@@ -68,6 +68,13 @@ import com.example.helloworld.room.AppDatabase
 import com.example.helloworld.room.CoordinatesEntity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+//v7 firebase
+import com.firebase.ui.auth.AuthUI
+import com.firebase.ui.auth.IdpResponse
+import com.google.firebase.auth.FirebaseAuth
+import android.app.Activity
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 
 class MainActivity : AppCompatActivity(), LocationListener {
     private val TAG = "btaMainActivity"
@@ -79,8 +86,16 @@ class MainActivity : AppCompatActivity(), LocationListener {
     private var latestLocation by mutableStateOf<Location?>(null)
     private var isLocationEnabled by mutableStateOf(false)
 
+    private lateinit var auth: FirebaseAuth
+
+    companion object {
+        private const val RC_SIGN_IN = 123
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // launch signin flow
+        auth = FirebaseAuth.getInstance()
 
         Log.d(TAG, "onCreate: The activity is being created.")
         enableEdgeToEdge()
@@ -120,6 +135,23 @@ class MainActivity : AppCompatActivity(), LocationListener {
         val context = LocalContext.current
         val userIdentifier = getUserIdentifier(context)
         var showDialog by remember { mutableStateOf(false) }
+        // v7 firebase
+        val user = FirebaseAuth.getInstance().currentUser
+        var showSignInPopup by remember { mutableStateOf(user == null) }
+
+        if (showSignInPopup) {
+            FirebaseLoginDialog(
+                onDismiss = { showSignInPopup = false },
+                onSignedIn = {
+                    Toast.makeText(context, "Signed in!", Toast.LENGTH_SHORT).show()
+                    showSignInPopup = false
+                },
+                onError = {
+                    Toast.makeText(context, "Sign-in canceled", Toast.LENGTH_SHORT).show()
+                    (context as? Activity)?.finish()
+                }
+            )
+        }
 
         Scaffold(
             topBar = {
@@ -170,7 +202,8 @@ class MainActivity : AppCompatActivity(), LocationListener {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "Hello World!")
+            val user = FirebaseAuth.getInstance().currentUser
+            Text("👤 ${user?.displayName ?: "No name"}")
 
             // commented out buttons
             /*
@@ -201,6 +234,18 @@ class MainActivity : AppCompatActivity(), LocationListener {
                 Text("Enter User ID")
             }
 
+            Button(onClick = { // Logout button
+                AuthUI.getInstance()
+                    .signOut(context)
+                    .addOnCompleteListener {
+                        val intent = Intent(context, MainActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        context.startActivity(intent)
+                    }
+            }) {
+                Text("Logout")
+            }
+
             LocationSwitch( // Location Switch
                 isChecked = isLocationEnabled,
                 onCheckedChange = { isChecked ->
@@ -229,6 +274,86 @@ class MainActivity : AppCompatActivity(), LocationListener {
             }
         } // Column
     } // MainScreen
+
+    private fun launchSignInFlow() {
+        val providers = arrayListOf(
+            AuthUI.IdpConfig.EmailBuilder().build(),
+            AuthUI.IdpConfig.GoogleBuilder().build()
+        )
+
+        val signInIntent = AuthUI.getInstance()
+            .createSignInIntentBuilder()
+            .setAvailableProviders(providers)
+            .build()
+
+        startActivityForResult(signInIntent, RC_SIGN_IN)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == RC_SIGN_IN) {
+            val response = IdpResponse.fromResultIntent(data)
+            if (resultCode == Activity.RESULT_OK) {
+                val user = FirebaseAuth.getInstance().currentUser
+                Toast.makeText(this, "Signed in as: ${user?.displayName}", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Sign-in canceled", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+        }
+    }
+
+    @Composable
+    fun FirebaseLoginDialog(
+        onDismiss: () -> Unit,
+        onSignedIn: () -> Unit,
+        onError: () -> Unit
+    ) {
+        val context = LocalContext.current
+        val activity = context as? Activity ?: return
+
+        AlertDialog(
+            onDismissRequest = { onDismiss() },
+            title = { Text("Login Required") },
+            text = { Text("Sign in with Google or Email to continue, or skip for now.") },
+            confirmButton = {
+                Button(onClick = {
+                    val providers = arrayListOf(
+                        AuthUI.IdpConfig.EmailBuilder().build(),
+                        AuthUI.IdpConfig.GoogleBuilder().build()
+                    )
+
+                    val signInIntent = AuthUI.getInstance()
+                        .createSignInIntentBuilder()
+                        .setAvailableProviders(providers)
+                        .setIsSmartLockEnabled(false)
+                        .build()
+
+                    activity.startActivityForResult(signInIntent, MainActivity.RC_SIGN_IN)
+                    onDismiss()
+                }) {
+                    Text("Sign In")
+                }
+            },
+            dismissButton = {
+                Row {
+                    Button(
+                        onClick = {
+                            Toast.makeText(context, "Continuing without login", Toast.LENGTH_SHORT).show()
+                            onDismiss() // Allow app to continue without authentication
+                        }
+                    ) {
+                        Text("Skip")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(onClick = onError) {
+                        Text("Exit")
+                    }
+                }
+            }
+        )
+    }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
