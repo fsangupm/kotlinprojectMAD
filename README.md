@@ -85,9 +85,9 @@ Technical Features:
 - Persistence in CSV/text file
 - Persistence in Room database, for storing coordinates
 - Room database for storing coordinates.
-- Maps: Openstreetmaps. Ref: Source code
+- Maps: Openstreetmaps. 
 - Resful APIs used: OpenStreetMap and Retrofit for Overpass API.
-- Menu: Navigation Drawer. Ref: Source code
+- Menu: Navigation Drawer. 
 - Sensors: GPS coordinates.
 
 ---
