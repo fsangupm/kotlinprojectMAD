@@ -20,21 +20,48 @@ Data is stored using a local Room database, while user preferences such as API k
 
 ## Screenshots and Navigation
 
-![Main screen with navigation drawer](https://github.com/fsangupm/kotlinprojectMAD/blob/master/images/Screenshot%202025-06-13%20at%202.04.33%20PM.png?raw=true)
-
-![Settings page with shared preferences](https://github.com/fsangupm/kotlinprojectMAD/blob/master/images/Screenshot%202025-06-13%20at%202.04.50%20PM.png?raw=true)
-
-![Location access](https://github.com/fsangupm/kotlinprojectMAD/blob/master/images/Screenshot%202025-06-13%20at%202.03.14%20PM.png?raw=true)
-
-![Location history](https://github.com/fsangupm/kotlinprojectMAD/blob/master/images/Screenshot%202025-06-13%20at%202.05.04%20PM.png?raw=true)
-
-![Individiual coordinate editing screen](https://github.com/fsangupm/kotlinprojectMAD/blob/master/images/Screenshot%202025-06-13%20at%202.05.08%20PM.png?raw=true)
-
-![Map with user's chosen bike route and nearby POIs](https://github.com/fsangupm/kotlinprojectMAD/blob/master/images/Screenshot%202025-06-13%20at%202.47.03%20PM.png?raw=true)
-
-![User authentication prompt](https://github.com/fsangupm/kotlinprojectMAD/blob/master/images/Screenshot%202025-06-13%20at%202.47.34%20PM.png?raw=true)
-
-![User authentication screen with Google login](https://github.com/fsangupm/kotlinprojectMAD/blob/master/images/Screenshot%202025-06-13%20at%202.47.46%20PM.png?raw=true)
+<table>
+  <tr>
+    <td align="center">
+      <img src="https://github.com/fsangupm/kotlinprojectMAD/blob/master/images/Screenshot%202025-06-13%20at%202.04.33%20PM.png?raw=true" width="300px"><br/>
+      <em>Main screen with navigation drawer</em>
+    </td>
+    <td align="center">
+      <img src="https://github.com/fsangupm/kotlinprojectMAD/blob/master/images/Screenshot%202025-06-13%20at%202.04.50%20PM.png?raw=true" width="300px"><br/>
+      <em>Settings page with shared preferences</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://github.com/fsangupm/kotlinprojectMAD/blob/master/images/Screenshot%202025-06-13%20at%202.03.14%20PM.png?raw=true" width="300px"><br/>
+      <em>Location access prompt</em>
+    </td>
+    <td align="center">
+      <img src="https://github.com/fsangupm/kotlinprojectMAD/blob/master/images/Screenshot%202025-06-13%20at%202.05.04%20PM.png?raw=true" width="300px"><br/>
+      <em>Location history list</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://github.com/fsangupm/kotlinprojectMAD/blob/master/images/Screenshot%202025-06-13%20at%202.05.08%20PM.png?raw=true" width="300px"><br/>
+      <em>Individual coordinate editing screen</em>
+    </td>
+    <td align="center">
+      <img src="https://github.com/fsangupm/kotlinprojectMAD/blob/master/images/Screenshot%202025-06-13%20at%202.47.03%20PM.png?raw=true" width="300px"><br/>
+      <em>Map with user's chosen bike route and nearby POIs</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://github.com/fsangupm/kotlinprojectMAD/blob/master/images/Screenshot%202025-06-13%20at%202.47.34%20PM.png?raw=true" width="300px"><br/>
+      <em>User authentication prompt</em>
+    </td>
+    <td align="center">
+      <img src="https://github.com/fsangupm/kotlinprojectMAD/blob/master/images/Screenshot%202025-06-13%20at%202.47.46%20PM.png?raw=true" width="300px"><br/>
+      <em>User authentication screen with Google login</em>
+    </td>
+  </tr>
+</table>
 
 ---
 
