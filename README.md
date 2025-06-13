@@ -20,6 +20,22 @@ Data is stored using a local Room database, while user preferences such as API k
 
 ## Screenshots and Navigation
 
+![Main screen with navigation drawer](images/Screenshot 2025-06-13 at 2.04.33 PM.png)
+
+![Settings page with shared preferences](images/Screenshot 2025-06-13 at 2.04.50 PM.png)
+
+![Location access](images/Screenshot 2025-06-13 at 2.03.14 PM.png)
+
+![Location history](images/Screenshot 2025-06-13 at 2.05.04 PM.png)
+
+![Individiual coordinate editing screen](images/Screenshot 2025-06-13 at 2.05.08 PM.png)
+
+![Map with user's chosen bike route and nearby POIs](images/Screenshot 2025-06-13 at 2.47.03 PM.png)
+
+![User authentication](images/Screenshot 2025-06-13 at 2.47.34 PM.png)
+
+![User authentication screen with Google login](images/Screenshot 2025-06-13 at 2.47.46 PM.png)
+
 ---
 
 ## Demo Video
