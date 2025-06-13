@@ -66,7 +66,7 @@ Data is stored using a local Room database, while user preferences such as API k
 ---
 
 ## Demo Video
-[App demo](https://upm365-my.sharepoint.com/:f:/g/personal/f_sang_alumnos_upm_es/Et-jP5ggQpBAr3wiYzMWC8oBL_xYPP2C_dYj3EQCtkSyZA)
+[App demo](https://youtu.be/mMOd-sxxWYM)
 
 ---
 
